@@ -1,4 +1,17 @@
-<h1>Reddit's Front Page</h1>
+<h1>Car Prices</h1>
+
+<%= form_tag(root_path, :method => "get", id: "search-form") do %>
+<%= text_field_tag :search, params[:search], placeholder: "Search VIN" %>
+<%= submit_tag "Search" %>
+<% end %>
+
+
+<% @pricesArray.each do |price| %>
+  <%= price %>
+<% end %>
+
+<h1> </h1>
+
 <table>
 <% Entry.all.each do |entry| %>
 	
