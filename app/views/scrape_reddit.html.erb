@@ -1,0 +1,5 @@
+<h1>Reddit's Front Page</h1>
+<% Entry.all.each do |entry| %>
+  <p><%= entry.title %></p>
+  <p><%= entry.description %></p>
+<% end %>
