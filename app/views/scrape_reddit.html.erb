@@ -13,6 +13,13 @@
 <h1> </h1>
 
 <table>
+	<tr> <td></td>
+		<td>
+			<%= form_tag(root_path, :method => "get", id: "seeAll") do %>
+			<%= submit_tag  :seeAll , name: "seeAll",value: "See MORE Listings" %>
+			<% end %>
+		</td>
+	</tr>
 <% Entry.all.each do |entry| %>
 	
 	<tr>
