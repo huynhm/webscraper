@@ -1,5 +1,7 @@
 <h1>Car Prices</h1>
 
+
+
 <%= form_tag(root_path, :method => "get", id: "search-form") do %>
 <%= text_field_tag :search, params[:search], placeholder: "Search VIN" %>
 <%= submit_tag "Search" %>
@@ -26,4 +28,7 @@
   		<td><%= entry.title %></td><td><%= entry.description %></td>
   	</tr>
 <% end %>
+	
+
+
 </table>
