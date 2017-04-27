@@ -1,0 +1,2 @@
+class OldPrice < ApplicationRecord
+end

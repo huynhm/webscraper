@@ -13,3 +13,7 @@
  *= require_tree .
  *= require_self
  */
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}

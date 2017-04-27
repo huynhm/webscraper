@@ -10,13 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170412151404) do
+ActiveRecord::Schema.define(version: 20170427161522) do
 
-  create_table "entries", force: :cascade do |t|
-    t.string   "title"
-    t.text     "description"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
+  create_table "cars", force: :cascade do |t|
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
+    t.string   "vin"
+    t.string   "make"
+    t.string   "model"
+    t.string   "year"
+    t.string   "price"
+    t.string   "oldprices",   default: [],              array: true
+    t.datetime "pricestamps", default: [],              array: true
+  end
+
+  create_table "old_prices", force: :cascade do |t|
+    t.string   "vin"
+    t.string   "oldprice"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer  "car_id"
+    t.index ["car_id"], name: "index_old_prices_on_car_id", using: :btree
   end
 
 end

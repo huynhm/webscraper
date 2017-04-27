@@ -14,12 +14,20 @@ class ApplicationController < ActionController::Base
 	    #doc = Nokogiri::HTML(open("https://www.cars.com/for-sale/searchresults.action/?rd=30&zc=&searchSource=QUICK_FORM&moveTo=listing-698591215"))
 		vin = "SCA664S55HUX54239"
 	    #doc2 = Nokogiri::HTML(open("https://www.cargurus.com/Cars/instantMarketValueFromVIN.action?startUrl=%2F&carDescription.vin=#{search}"))
-		#entries = doc2.css('.cg-listing-body')
+		#Cars = doc2.css('.cg-listing-body')
 
 		
 		
-		#@prices = Entry.search(params[:search])
+		#@prices = Car.search(params[:search])
 		@pricesArray = []
+=begin
+<%= form_tag(root_path, :method => "get", id: "search-form") do %>
+<%= text_field_tag :search, params[:search], placeholder: "Search VIN" %>
+<%= submit_tag "Search" %>
+<% end %>
+
+
+
 		search = params[:search]
 		searchURL = "https://www.cargurus.com/Cars/instantMarketValueFromVIN.action?startUrl=%2F&carDescription.vin=#{search}"
 
@@ -31,71 +39,62 @@ class ApplicationController < ActionController::Base
 				link = link[6..-1].strip
 				@pricesArray.push([title,link])
 
-				newPrice = Entry.new(title: title, description: link)
-			      if Entry.where(title: title, description: link).blank?
+				newPrice = Car.new(title: title, description: link)
+			      if Car.where(title: title, description: link).blank?
 			      	 newPrice.save
 				  end
 			end
 		end
+=end		
 
 		##LISTING
 		hydra = Typhoeus::Hydra.new
-		lastPage = 2
+		@oldPrices = []
+		lastPage = 7
 		if params[:seeAll].present?
-			lastPage = 51
+			lastPage = 8
 		end
-		$pageCount = 1
-		#while $pageCount < lastPage do
-			#page = $pageCount.to_s
-			#Typhoeus.get("https://www.cars.com/for-sale/searchresults.action/?page=#{page}&perPage=100&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48152")
+		carsdotcom = "https://www.cars.com"
+		$pageCount = 7
+		while $pageCount < lastPage do  
+			page = $pageCount.to_s
+			request = Typhoeus::Request.new("https://www.cars.com/for-sale/searchresults.action/?mdId=21138&mkId=20015&page=#{page}&perPage=10&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48126", followlocation: true)
+			request.on_complete do |response|
+				doc = Nokogiri::HTML(response.body)
+			    cars = doc.css('.shop-srp-listings__listing')
+			    cars.each do |car|
+				      title = car.css('.listing-row__title>a').text.strip
+				      href = car.css('.listing-row__title-visited>a')[0]["href"].strip
+				      carlink = carsdotcom + href
 
-			lastPage.times do  
-				page = $pageCount.to_s
-				request = Typhoeus::Request.new("https://www.cars.com/for-sale/searchresults.action/?page=#{page}&perPage=100&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48152", followlocation: true)
-				request.on_complete do |response|
-					doc = Nokogiri::HTML(response.body)
-				    entries = doc.css('.shop-srp-listings__listing')
-				    entries.each do |entry|
+				      #vinReq = Typhoeus::Request.new("https://www.cars.com/vehicledetail/detail/698146367/overview/", followlocation: true)
+				      vinDoc = Nokogiri::HTML(open(carlink))
+				      vin = vinDoc.css('.breadcrumb-trailing>a')[3].text.strip
+				      vin = vin[5..-1].strip
 
-					      title = entry.css('.listing-row__title>a').text.strip
-					      link = entry.css('.listing-row__price').text.strip
-					      #entry.css('p.title>a')[0]['href']
-					      #@entriesArray << Entry.new(title, link)
+				      price = car.css('.listing-row__price').text.strip
 
-					      newEntry = Entry.new(title: title, description:link)
-					      if Entry.where(title: title, description: link).blank?
-					      	 newEntry.save
-						  end
-					end
+				      newCar = Car.new(model: title, price: price, vin: vin)
+				      if Car.where(vin: vin).blank?
+				      		newCar.save
+						else
+					      	someCar = Car.where(vin: vin)[0]
+						    if someCar.price != price
+						    	someCar.oldprices << someCar.price
+						    	someCar.pricestamps << Time.now
+						        someCar.price = price
+						        someCar.save
+						        #oldPrice = OldPrice.new(vin: vin, oldprice: somePrice)
+						       
+						    end
+					  end
+					  #@oldPrices = OldPrice.where(vin: vin)
 				end
-				hydra.queue(request) 
-				$pageCount = $pageCount + 1
 			end
-			hydra.run
-
-
-
-			#doc = Nokogiri::HTML(open("https://www.cars.com/for-sale/searchresults.action/?page=#{page}&perPage=100&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48152"))
-		    #doc = Nokogiri::HTML(response.body)
-=begin
-		    entries = doc.css('.shop-srp-listings__listing')
-		    entries.each do |entry|
-
-			      title = entry.css('.listing-row__title>a').text.strip
-			      link = entry.css('.listing-row__price').text.strip
-			      #entry.css('p.title>a')[0]['href']
-			      #@entriesArray << Entry.new(title, link)
-
-			      newEntry = Entry.new(title: title, description:link)
-			      if Entry.where(title: title, description: link).blank?
-			      	 newEntry.save
-				  end
-			end
-=end
-			#$pageCount = $pageCount + 1
-		#end
-
-
+			hydra.queue(request) 
+			$pageCount = $pageCount + 1
+		end
+		hydra.run
 		
 	    render template: 'scrape_reddit'
 	end

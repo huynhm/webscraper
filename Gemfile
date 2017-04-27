@@ -10,6 +10,8 @@ gem 'resque'
 gem "typhoeus"
 gem 'responders'
 
+gem 'watir'
+
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'mechanize'
 gem 'rails', '~> 5.0.2'
