@@ -1,11 +1,16 @@
-class ChangeCarColumns < ActiveRecord::Migration[5.0]
+
+class CreateCars < ActiveRecord::Migration[5.0]
   def change
-  	add_column :cars, :vin, :string
-  	add_column :cars, :make, :string
-  	add_column :cars, :model, :string
-  	add_column :cars, :year, :string
-  	add_column :cars, :price, :string
-  	remove_column :cars, :title
-  	remove_column :cars, :description
+    create_table :cars do |t|
+      t.string :user
+      t.string :password
+	  	t.string :vin
+	  	t.string :make
+	  	t.string :model
+	  	t.string :year
+	  	t.string :price
+
+      t.timestamps
+    end
   end
 end
