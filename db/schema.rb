@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170427161522) do
+ActiveRecord::Schema.define(version: 20170502135443) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -25,6 +25,7 @@ ActiveRecord::Schema.define(version: 20170427161522) do
     t.string   "price"
     t.string   "oldprices",   default: [],              array: true
     t.datetime "pricestamps", default: [],              array: true
+    t.string   "urls",        default: [],              array: true
   end
 
   create_table "old_prices", force: :cascade do |t|
