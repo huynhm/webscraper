@@ -49,6 +49,8 @@ class ApplicationController < ActionController::Base
 
 		##LISTING
 		hydra = Typhoeus::Hydra.new
+		prices = []
+		urls = []
 		@oldPrices = []
 		lastPage = 7
 		if params[:seeAll].present?
@@ -63,6 +65,8 @@ class ApplicationController < ActionController::Base
 				doc = Nokogiri::HTML(response.body)
 			    cars = doc.css('.shop-srp-listings__listing')
 			    cars.each do |car|
+			    	  prices = []
+			    	  urls = []
 				      title = car.css('.listing-row__title>a').text.strip
 				      href = car.css('.listing-row__title-visited>a')[0]["href"].strip
 				      carlink = carsdotcom + href
@@ -73,16 +77,33 @@ class ApplicationController < ActionController::Base
 				      vin = vin[5..-1].strip
 
 				      price = car.css('.listing-row__price').text.strip
-
-				      newCar = Car.new(model: title, price: price, vin: vin)
+				      prices << price
+				      urls << carlink
+				      newCar = Car.new(model: title, price: prices, vin: vin, urls: urls)
 				      if Car.where(vin: vin).blank?
 				      		newCar.save
 						else
 					      	someCar = Car.where(vin: vin)[0]
-						    if someCar.price != price
-						    	someCar.oldprices << someCar.price
-						    	someCar.pricestamps << Time.now
-						        someCar.price = price
+						    if someCar.price[0] != prices[0] #compare old price with newly retrieved price
+
+						    	op_index0 = someCar.oldprices[0].to_s
+						    	if 	someCar.oldprices[0].present?
+						    		op_index0 = op_index0 + ', ' + someCar.price[0].to_s
+						    	else
+						    		op_index0 = someCar.price[0].to_s
+						    	end
+						    	someCar.oldprices[0] = op_index0
+
+						    	ps_index0 = someCar.pricestamps[0].to_s
+						    	if 	someCar.pricestamps[0].present?
+						    		ps_index0 = ps_index0 + ", "  + Time.now.strftime("%m/%d/%Y %H:%M").to_s
+						    	else
+						    		ps_index0 = Time.now.strftime("%m/%d/%Y %H:%M").to_s
+						    	end
+						    	someCar.pricestamps[0] = ps_index0
+
+						        someCar.price[0] = price
+						        #someCar.urls.push(carlink)
 						        someCar.save
 						        #oldPrice = OldPrice.new(vin: vin, oldprice: somePrice)
 						       

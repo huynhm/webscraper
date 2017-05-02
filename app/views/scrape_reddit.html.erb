@@ -30,15 +30,16 @@
 	<% Car.all.each do |c| %>
 		
 		<tr>
-			<td> <%= c.model  %> <td align = "right"> <%= c.price  %> </td> <td> <%= c.vin  %> </td> <td> 	<% c.oldprices.each do |p| %>
+			<td> <%= c.model  %> <td align = "right"> <a href = <%= c.urls[0] %> > <%= c.price[0]  %> </a> </td> <td> <%= c.vin  %> </td> <td> 	<% c.oldprices.each do |p| %>
 																												<%= p %> <br> 
 																											<% end %> 
 
 																									</td>
 
-																									<td > 	<% c.pricestamps.each do |t| %>
-																												<%= t.strftime("%Y %b %d %H:%M") %> <br> 
-																											<% end %> 
+																									<td > 	<% c.pricestamps.each do |ps_row| %>
+																												<%= ps_row.inspect %>
+																												<br> 
+																											<% end %>
 
 																									</td>
 
