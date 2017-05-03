@@ -19,36 +19,74 @@ class ApplicationController < ActionController::Base
 		
 		
 		#@prices = Car.search(params[:search])
-		@pricesArray = []
-=begin
-<%= form_tag(root_path, :method => "get", id: "search-form") do %>
-<%= text_field_tag :search, params[:search], placeholder: "Search VIN" %>
-<%= submit_tag "Search" %>
-<% end %>
-
-
+		pricesArray = []
+		urlsArray = []
 
 		search = params[:search]
 		searchURL = "https://www.cargurus.com/Cars/instantMarketValueFromVIN.action?startUrl=%2F&carDescription.vin=#{search}"
 
 		if doc2 = Nokogiri::HTML(open(searchURL))
-			prices = doc2.css('.cg-listing-body')
-			prices.each do |price|
-				title = price.css('span')[0].text.strip
-				link = price.css('span')[3].text.strip
-				link = link[6..-1].strip
-				@pricesArray.push([title,link])
+			cars = doc2.css('.cg-listing-body')
+			cars.each do |car|
+				pricesArray = []
+				urlsArray = []
+				model = car.css('span')[0].text.strip
+				price = car.css('span')[3].text.strip
+				price = price[6..-1].strip
+				pricesArray.push(price)
+				urlsArray.push(searchURL)
 
-				newPrice = Car.new(title: title, description: link)
-			      if Car.where(title: title, description: link).blank?
-			      	 newPrice.save
-				  end
+				newPrice = Car.new(vin: search, model: model, price: pricesArray, urls: urlsArray)
+				if Car.where(vin: search)[0].blank?
+					newPrice.save
+					puts '@@@@@@@@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@'
+				else
+					#params vin, url, siteprice
+					existCar = Car.where(vin: search)[0]
+					if existCar.urls.include?(searchURL) #website already there => check if current site's prices equals to db's current site price
+						
+						index = existCar.urls.index(searchURL) #get website index
+						if existCar.price[index] == price
+							#same prices, do nothing
+						else
+							#insert current db price into oldprices, and pricestamps, update current db price with new price
+					    	op_index = existCar.oldprices[index].to_s
+					    	if 	existCar.oldprices[index].present?
+					    		op_index = op_index + ', ' + existCar.price[index].to_s
+					    	else
+					    		op_index = existCar.price[index].to_s
+					    	end
+					    	existCar.oldprices[index] = op_index
+
+					    	ps_index = existCar.pricestamps[index].to_s
+					    	if 	existCar.pricestamps[index].present?
+					    		ps_index = ps_index + ", "  + Time.now.strftime("%m/%d/%Y %H:%M").to_s
+					    	else
+					    		ps_index = Time.now.strftime("%m/%d/%Y %H:%M").to_s
+					    	end
+					    	existCar.pricestamps[index] = ps_index
+
+					        existCar.price[index] = price
+					        #someCar.urls.push(carlink)
+					        existCar.save 
+						end 
+						
+					else #VIN exists, but new website, get price on that new website
+						existCar.urls.push(searchURL)
+						existCar.price.push(price)
+						existCar.save
+						
+
+					end
+
+				end
 			end
 		end
-=end		
+		
 
 		##LISTING
 		hydra = Typhoeus::Hydra.new
+		index = -1
 		prices = []
 		urls = []
 		@oldPrices = []
@@ -58,9 +96,11 @@ class ApplicationController < ActionController::Base
 		end
 		carsdotcom = "https://www.cars.com"
 		$pageCount = 7
+
 		while $pageCount < lastPage do  
 			page = $pageCount.to_s
-			request = Typhoeus::Request.new("https://www.cars.com/for-sale/searchresults.action/?mdId=21138&mkId=20015&page=#{page}&perPage=10&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48126", followlocation: true)
+			carlistings = "https://www.cars.com/for-sale/searchresults.action/?mdId=21138&mkId=20015&page=#{page}&perPage=10&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48126"
+			request = Typhoeus::Request.new(carlistings, followlocation: true)
 			request.on_complete do |response|
 				doc = Nokogiri::HTML(response.body)
 			    cars = doc.css('.shop-srp-listings__listing')
@@ -77,37 +117,53 @@ class ApplicationController < ActionController::Base
 				      vin = vin[5..-1].strip
 
 				      price = car.css('.listing-row__price').text.strip
+				      puts "-------#{price}----------"
 				      prices << price
 				      urls << carlink
 				      newCar = Car.new(model: title, price: prices, vin: vin, urls: urls)
-				      if Car.where(vin: vin).blank?
+				      if Car.where(vin: vin)[0].blank?
 				      		newCar.save
 						else
-					      	someCar = Car.where(vin: vin)[0]
-						    if someCar.price[0] != prices[0] #compare old price with newly retrieved price
+							
+							someCar = Car.where(vin: vin)[0]
+							if someCar.urls.include?(carlink)
+								index = someCar.urls.index(carlink)
+							    if someCar.price[index] == price #compare old price with newly retrieved price
+							    	##do nothing
+							    else
+							    	op_index0 = someCar.oldprices[index].to_s
+							    	if 	someCar.oldprices[index].present?
+							    		op_index0 = op_index0 + ', ' + someCar.price[index].to_s
+							    	else
+							    		op_index0 = someCar.price[index].to_s
+							    	end
+							    	someCar.oldprices[index] = op_index0
 
-						    	op_index0 = someCar.oldprices[0].to_s
-						    	if 	someCar.oldprices[0].present?
-						    		op_index0 = op_index0 + ', ' + someCar.price[0].to_s
-						    	else
-						    		op_index0 = someCar.price[0].to_s
-						    	end
-						    	someCar.oldprices[0] = op_index0
+							    	ps_index0 = someCar.pricestamps[index].to_s
+							    	if 	someCar.pricestamps[index].present?
+							    		ps_index0 = ps_index0 + ", "  + Time.now.strftime("%m/%d/%Y %H:%M").to_s
+							    	else
+							    		ps_index0 = Time.now.strftime("%m/%d/%Y %H:%M").to_s
+							    	end
+							    	someCar.pricestamps[index] = ps_index0
 
-						    	ps_index0 = someCar.pricestamps[0].to_s
-						    	if 	someCar.pricestamps[0].present?
-						    		ps_index0 = ps_index0 + ", "  + Time.now.strftime("%m/%d/%Y %H:%M").to_s
-						    	else
-						    		ps_index0 = Time.now.strftime("%m/%d/%Y %H:%M").to_s
-						    	end
-						    	someCar.pricestamps[0] = ps_index0
+							        someCar.price[index] = price
+							        #someCar.urls.push(carlink)
+							        someCar.save
+							        #oldPrice = OldPrice.new(vin: vin, oldprice: somePrice)
+							       
+							    end
 
-						        someCar.price[0] = price
-						        #someCar.urls.push(carlink)
-						        someCar.save
-						        #oldPrice = OldPrice.new(vin: vin, oldprice: somePrice)
-						       
-						    end
+
+							else
+								someCar.urls.push(carlink)
+								someCar.price.push(price)
+								someCar.save
+
+							end
+
+							
+
 					  end
 					  #@oldPrices = OldPrice.where(vin: vin)
 				end
@@ -120,8 +176,44 @@ class ApplicationController < ActionController::Base
 	    render template: 'scrape_reddit'
 	end
 
+	def checkupdate_siteprice(vin, siteprice)
+		#params vin, url, siteprice
+		index = -1
+		getCar = Car.where(vin: vin)[0]
+		getCar.urls.each do |gcURL|
+			if gcURL == siteurl #website already there => check if current site's prices equals to db's current site price
+				
+				index = getCar.urls.index(gcURL) #get website index
+				if getCar.price[index] == siteprice
+					#same prices, do nothing
+				else
+					#insert current db price into oldprices, and pricestamps, update current db price with new price
+			    	op_index = getCar.oldprices[index].to_s
+			    	if 	getCar.oldprices[index].present?
+			    		op_index = op_index + ', ' + getCar.price[index].to_s
+			    	else
+			    		op_index = getCar.price[index].to_s
+			    	end
+			    	getCar.oldprices[index] = op_index
 
+			    	ps_index = getCar.pricestamps[index].to_s
+			    	if 	getCar.pricestamps[index].present?
+			    		ps_index = ps_index + ", "  + Time.now.strftime("%m/%d/%Y %H:%M").to_s
+			    	else
+			    		ps_index = Time.now.strftime("%m/%d/%Y %H:%M").to_s
+			    	end
+			    	getCar.pricestamps[index] = ps_index
 
+			        getCar.price[index] = siteprice
+			        #someCar.urls.push(carlink)
+			        getCar.save 
+				end 
+				
+			end
+			getCar.save
+
+		end
+	end
 
 
 
