@@ -1,4 +1,5 @@
 require "application_responder"
+require "rake"
 
 class ApplicationController < ActionController::Base
   self.responder = ApplicationResponder
@@ -23,6 +24,7 @@ class ApplicationController < ActionController::Base
 		urlsArray = []
 
 		search = params[:search]
+		search = search.to_s.strip
 		searchURL = "https://www.cargurus.com/Cars/instantMarketValueFromVIN.action?startUrl=%2F&carDescription.vin=#{search}"
 
 		if doc2 = Nokogiri::HTML(open(searchURL))
@@ -95,9 +97,9 @@ class ApplicationController < ActionController::Base
 			lastPage = 8
 		end
 		carsdotcom = "https://www.cars.com"
-		$pageCount = 7
+		pageCount = 7
 
-		while $pageCount < lastPage do  
+		while pageCount < lastPage do  
 			page = $pageCount.to_s
 			carlistings = "https://www.cars.com/for-sale/searchresults.action/?mdId=21138&mkId=20015&page=#{page}&perPage=10&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48126"
 			request = Typhoeus::Request.new(carlistings, followlocation: true)
@@ -123,7 +125,7 @@ class ApplicationController < ActionController::Base
 				      newCar = Car.new(model: title, price: prices, vin: vin, urls: urls)
 				      if Car.where(vin: vin)[0].blank?
 				      		newCar.save
-						else
+					  else
 							
 							someCar = Car.where(vin: vin)[0]
 							if someCar.urls.include?(carlink)
@@ -150,7 +152,9 @@ class ApplicationController < ActionController::Base
 							        someCar.price[index] = price
 							        #someCar.urls.push(carlink)
 							        someCar.save
+							        someCar = Car.where(vin: vin)[0]
 							        #oldPrice = OldPrice.new(vin: vin, oldprice: somePrice)
+
 							       
 							    end
 
@@ -159,8 +163,10 @@ class ApplicationController < ActionController::Base
 								someCar.urls.push(carlink)
 								someCar.price.push(price)
 								someCar.save
+								someCar = Car.where(vin: vin)[0]
 
 							end
+							check_otherprices(vin, carlink)
 
 							
 
@@ -169,48 +175,73 @@ class ApplicationController < ActionController::Base
 				end
 			end
 			hydra.queue(request) 
-			$pageCount = $pageCount + 1
+			pageCount = pageCount + 1
 		end
 		hydra.run
 		
 	    render template: 'scrape_reddit'
 	end
 
-	def checkupdate_siteprice(vin, siteprice)
+	def check_otherprices(vin, siteurl)
 		#params vin, url, siteprice
 		index = -1
+		curprice = -1
 		getCar = Car.where(vin: vin)[0]
-		getCar.urls.each do |gcURL|
-			if gcURL == siteurl #website already there => check if current site's prices equals to db's current site price
-				
-				index = getCar.urls.index(gcURL) #get website index
-				if getCar.price[index] == siteprice
-					#same prices, do nothing
-				else
-					#insert current db price into oldprices, and pricestamps, update current db price with new price
-			    	op_index = getCar.oldprices[index].to_s
-			    	if 	getCar.oldprices[index].present?
-			    		op_index = op_index + ', ' + getCar.price[index].to_s
-			    	else
-			    		op_index = getCar.price[index].to_s
-			    	end
-			    	getCar.oldprices[index] = op_index
+		u = 0
+		while u < getCar.urls.size
+			othersite = getCar.urls[u].strip
+			if getCar.urls[u].strip != siteurl #other websites besides siteurl
+				#fetch gcURL,
+				sitename = getCar.urls[u].split('.')[1] 
+				if sitename == "cars"
 
-			    	ps_index = getCar.pricestamps[index].to_s
-			    	if 	getCar.pricestamps[index].present?
-			    		ps_index = ps_index + ", "  + Time.now.strftime("%m/%d/%Y %H:%M").to_s
-			    	else
-			    		ps_index = Time.now.strftime("%m/%d/%Y %H:%M").to_s
-			    	end
-			    	getCar.pricestamps[index] = ps_index
+				elsif sitename == "cargurus"
+					if doc2 = Nokogiri::HTML(open(othersite))
+						cars = doc2.css('.cg-listing-body')
+						cars.each do |car|
+							curprice = car.css('span')[3].text.strip
+							curprice = curprice[6..-1].strip
+							update_otherprices(index, getCar, othersite, curprice)
+							getCar = Car.where(vin: vin)[0]
 
-			        getCar.price[index] = siteprice
-			        #someCar.urls.push(carlink)
-			        getCar.save 
-				end 
-				
+						end
+
+					end
+
+				end
+				#index, getCar, othersite, curprice
 			end
 			getCar.save
+			getCar = Car.where(vin: vin)[0]
+			u += 1 
+		end
+	end
+
+	def update_otherprices(index, getCar, othersite, curprice)
+		index = getCar.urls.index(othersite) #get website index
+		if getCar.price[index] == curprice
+			#same prices, do nothing
+		else
+			#insert current db price into oldprices, and pricestamps, update current db price with new price
+	    	op_index = getCar.oldprices[index].to_s
+	    	if 	getCar.oldprices[index].present?
+	    		op_index = op_index + ', ' + getCar.price[index].to_s
+	    	else
+	    		op_index = getCar.price[index].to_s
+	    	end
+	    	getCar.oldprices[index] = op_index
+
+	    	ps_index = getCar.pricestamps[index].to_s
+	    	if 	getCar.pricestamps[index].present?
+	    		ps_index = ps_index + ", "  + Time.now.strftime("%m/%d/%Y %H:%M").to_s
+	    	else
+	    		ps_index = Time.now.strftime("%m/%d/%Y %H:%M").to_s
+	    	end
+	    	getCar.pricestamps[index] = ps_index
+
+	        getCar.price[index] = curprice
+	        #someCar.urls.push(carlink)
+	        getCar.save
 
 		end
 	end
