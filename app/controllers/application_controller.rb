@@ -40,7 +40,7 @@ class ApplicationController < ActionController::Base
 
 				newPrice = Car.new(vin: search, model: model, price: pricesArray, urls: urlsArray)
 				if Car.where(vin: search)[0].blank?
-					newPrice.save
+					newPrice.save!
 					puts '@@@@@@@@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@'
 				else
 					#params vin, url, siteprice
@@ -70,13 +70,13 @@ class ApplicationController < ActionController::Base
 
 					        existCar.price[index] = price
 					        #someCar.urls.push(carlink)
-					        existCar.save 
+					        existCar.save! 
 						end 
 						
 					else #VIN exists, but new website, get price on that new website
 						existCar.urls.push(searchURL)
 						existCar.price.push(price)
-						existCar.save
+						existCar.save!
 						
 
 					end
@@ -92,7 +92,7 @@ class ApplicationController < ActionController::Base
 		prices = []
 		urls = []
 		@oldPrices = []
-		lastPage = 7
+		lastPage = 8
 		if params[:seeAll].present?
 			lastPage = 8
 		end
@@ -124,7 +124,7 @@ class ApplicationController < ActionController::Base
 				      urls << carlink
 				      newCar = Car.new(model: title, price: prices, vin: vin, urls: urls)
 				      if Car.where(vin: vin)[0].blank?
-				      		newCar.save
+				      		newCar.save!
 					  else
 							
 							someCar = Car.where(vin: vin)[0]
@@ -151,7 +151,7 @@ class ApplicationController < ActionController::Base
 
 							        someCar.price[index] = price
 							        #someCar.urls.push(carlink)
-							        someCar.save
+							        someCar.save!
 							        someCar = Car.where(vin: vin)[0]
 							        #oldPrice = OldPrice.new(vin: vin, oldprice: somePrice)
 
@@ -162,7 +162,7 @@ class ApplicationController < ActionController::Base
 							else
 								someCar.urls.push(carlink)
 								someCar.price.push(price)
-								someCar.save
+								someCar.save!
 								someCar = Car.where(vin: vin)[0]
 
 							end
@@ -211,7 +211,7 @@ class ApplicationController < ActionController::Base
 				end
 				#index, getCar, othersite, curprice
 			end
-			getCar.save
+			getCar.save!
 			getCar = Car.where(vin: vin)[0]
 			u += 1 
 		end
@@ -241,7 +241,7 @@ class ApplicationController < ActionController::Base
 
 	        getCar.price[index] = curprice
 	        #someCar.urls.push(carlink)
-	        getCar.save
+	        getCar.save!
 
 		end
 	end
