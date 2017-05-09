@@ -92,12 +92,12 @@ class ApplicationController < ActionController::Base
 		prices = []
 		urls = []
 		@oldPrices = []
-		lastPage = 8
+		lastPage = 11
 		if params[:seeAll].present?
-			lastPage = 8
+			lastPage = 11
 		end
 		carsdotcom = "https://www.cars.com"
-		pageCount = 7
+		pageCount = 10
 
 		while pageCount < lastPage do  
 			page = $pageCount.to_s
@@ -119,7 +119,7 @@ class ApplicationController < ActionController::Base
 				      vin = vin[5..-1].strip
 
 				      price = car.css('.listing-row__price').text.strip
-				      puts "-------#{price}----------"
+				      puts "-------#{vin}----------"
 				      prices << price
 				      urls << carlink
 				      newCar = Car.new(model: title, price: prices, vin: vin, urls: urls)
