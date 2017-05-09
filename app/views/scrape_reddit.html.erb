@@ -1,16 +1,5 @@
 
-
 <h1>Car Prices</h1>
-
-<%= form_tag(root_path, :method => "get", id: "search-form") do %>
-<%= text_field_tag :search, params[:search], placeholder: "Search CarGurus VIN" %>
-<%= submit_tag "SearchCarGurus" %>
-<% end %>
-
-
-
-
-
 
 
 <h1> </h1>
@@ -26,56 +15,13 @@
 		</td>
 	</tr>
 	<tr>
-		<th>Model </th> <th> Price </th> <th> VIN </th> <th> OldPrices </th> <th>Timestamps  </th>
+		<th>Model </th><th> VIN </th>
 	</tr>
-	<% Car.all.each do |c| %>
+	<% Car.all.distinct(:vin).each do |c| %>
 		
 		<tr>
-			<td> <%= c.model  %> <td align = "left" border= "1">
-								<table >
-					
-								<% for j in 0..c.urls.size %>
-									<% if c.urls[j].present? %>
-										 
-										<tr><td><%= c.urls[j].split('.')[1] %>: <a href = <%= c.urls[j] %> >  <%= c.price[j]  %> </a></td></tr> 
-									<% end %>
-								<% end %>
-			
-								</table>
-								</td>
-								<td> <%= c.vin  %> </td> 
-
-								<td ><table border = '1'>
-									
-									<% for k in 0..c.oldprices.size %>
-										
-										<% if c.oldprices[k].present? %>
-											<tr>
-												<td>
-												<%= c.urls[k].split('.')[1] %>: 
-												<%=  c.oldprices[k] %>
-												</td>
-											</tr>
-										<% end %>
-										
-									<% end %>
-									
-									</table>
-								</td>
-
-								<td >
-									<table border= '1'>
-									<% for i in 0..c.pricestamps.size %>
-										
-										<% if c.pricestamps[i].present? %>
-											<tr>
-											<td><%=  c.pricestamps[i] %></td>
-											</tr>
-										<% end %>
-										
-									<% end %>
-									</table>
-								</td>
+			<td> <%= c.model  %> </td>
+			<td><%= link_to(c.vin, history_path(vin: c.vin))  %> </td>
 
 		</tr> 
 	<% end %>

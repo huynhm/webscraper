@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170502172746) do
+ActiveRecord::Schema.define(version: 20170509153840) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -26,6 +26,8 @@ ActiveRecord::Schema.define(version: 20170502172746) do
     t.string   "pricestamps", default: [],              array: true
     t.string   "urls",        default: [],              array: true
     t.string   "price",       default: [],              array: true
+    t.string   "carsdotcom"
+    t.string   "cargurus"
   end
 
   create_table "old_prices", force: :cascade do |t|
@@ -35,6 +37,14 @@ ActiveRecord::Schema.define(version: 20170502172746) do
     t.datetime "updated_at", null: false
     t.integer  "car_id"
     t.index ["car_id"], name: "index_old_prices_on_car_id", using: :btree
+  end
+
+  create_table "pricehistories", force: :cascade do |t|
+    t.string   "vin"
+    t.string   "carsdotcom"
+    t.string   "cargurus"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
 end
