@@ -19,6 +19,6 @@
 
 $(document).ready(function(){
 	     $('#seeAll').click(function() {
-            $(this).toggle();
+            $(this).hide();
         });
 });
