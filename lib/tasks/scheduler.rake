@@ -58,6 +58,7 @@ def getEdmundsPrice(vin)
 	edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
 	res = Net::HTTP.get_response(URI.parse(edmundURL))
 	# if it returns a good code
+	sleep 2
 	if res.code.to_i >= 200 && res.code.to_i < 400 #good codes will be betweem 200 - 399
 		if doc = Nokogiri::HTML(open(edmundURL))
 			eprice = doc.css(".price-container>span").text.strip
