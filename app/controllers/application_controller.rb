@@ -92,25 +92,67 @@ def initializeCars
 
 end
 
-def getEdmundsPrice(vin)
-	edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
-	if doc = Nokogiri::HTML(open(edmundURL))
-		eprice = doc.css(".price-container>span").text.strip
-		puts "Edmunds Price: #{eprice}"
-		someCar = Car.new(vin: vin)
-		if Car.where(vin: vin)[0].blank?
-			someCar.save!
-		else
-			if Car.where(vin: vin)[0].edmunds.blank?
-				upCar = Car.where(vin: vin)[0]
-				upCar.update(edmunds: edmundURL)
-			end
-		end
-		newPH = Pricehistory.new(vin: vin, edmunds: eprice)
-		newPH.save!
-	end
-end
+	def getEdmundsPrice(vin)
+		try = 0
+		edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
+		#res = Net::HTTP.get_response(URI.parse(edmundURL))
+		# if it returns a good code
+		#sleep 1.75
+		while try < 3 do
+				if doc = Nokogiri::HTML(open(edmundURL))
+					eprice = doc.css(".price-container>span").text.strip
+					if doc.css(".price-container>span").present?
+						puts "Edmunds Price: #{eprice}"
+						someCar = Car.new(vin: vin, edmunds: edmundURL)
+						if Car.where(vin: vin)[0].blank?
+							someCar.save!
+						else
+							if Car.where(vin: vin)[0].edmunds.blank?
+								upCar = Car.where(vin: vin)[0]
+								upCar.update(edmunds: edmundURL)
+							end
+						end
+						newPH = Pricehistory.new(vin: vin, edmunds: eprice)
+						newPH.save!
+						break
 
+					end
+				end
+
+			try += 1
+		end
+		
+	end
+
+	def getEdmundsPrice(vin)
+		edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
+		res = Net::HTTP.get_response(URI.parse(edmundURL))
+		# if it returns a good code
+		#sleep 1.75
+		if res.code.to_i >= 200 && res.code.to_i < 400 #good codes will be betweem 200 - 399
+			if doc = Nokogiri::HTML(open(edmundURL))
+				eprice = doc.css(".price-container>span").text.strip
+				if doc.css(".price-container>span").present?
+					puts "Edmunds Price: #{eprice}"
+					someCar = Car.new(vin: vin, edmunds: edmundURL)
+					if Car.where(vin: vin)[0].blank?
+						someCar.save!
+					else
+						if Car.where(vin: vin)[0].edmunds.blank?
+							upCar = Car.where(vin: vin)[0]
+							upCar.update(edmunds: edmundURL)
+						end
+					end
+					newPH = Pricehistory.new(vin: vin, edmunds: eprice)
+					newPH.save!
+				end
+			end
+		else
+		  # skip the object
+		  
+		end
+		
+	end
 
 	def getCarGurusPrice(vin)
 			searchURL = "https://www.cargurus.com/Cars/instantMarketValueFromVIN.action?startUrl=%2F&carDescription.vin=#{vin}"
@@ -121,7 +163,7 @@ end
 					price = car.css('span')[3].text.strip
 					price = price[6..-1].strip
 					puts "CarsGurus #{price}  #{vin} \n"
-					someCar = Car.new(model: model, vin: vin)
+					someCar = Car.new(vin: vin, cargurus: searchURL)
 					if Car.where(vin: vin)[0].blank?
 						someCar.save!
 					else
@@ -136,7 +178,6 @@ end
 				end
 			end
 	end
-
 end
 
 
