@@ -1,12 +1,16 @@
 <h2>Price History </h2> 
 <table>
-<th> VIN </th> <th> Cars.com </th> <th> CarGurus</th> <th> Created At </th>
+<th> VIN </th> <th> Cars.com </th> <th> CarGurus</th>  <th> Edmunds</th><th> Created At </th>
 
 
 <% @ph.all.each do |p| %>
 <tr>
-	<td> <%= p.vin %> </td> <td> <a href= '<%= @car.carsdotcom %>' > <%= p.carsdotcom %> </a>  </td> <td> <a href= '<%= @car.cargurus %>' > <%= p.cargurus %> </a> </td> <td> <%= p.created_at.to_s %> </td>
+	<td> <%= p.vin %> </td> <td> <a href= '<%= @car.carsdotcom %>' > <%= p.carsdotcom %> </a>  </td> <td> <a href= '<%= @car.cargurus %>' > <%= p.cargurus %> </a> </td>
+	<td> <a href= '<%= @car.edmunds %>' > <%= p.edmunds %> </a> </td>
+	 <td> <%= p.created_at.to_s %> </td>
 </tr>	
  <% end %>
 
 </table>
+
+

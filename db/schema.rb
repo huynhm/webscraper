@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170509153840) do
+ActiveRecord::Schema.define(version: 20170510172108) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -28,6 +28,7 @@ ActiveRecord::Schema.define(version: 20170509153840) do
     t.string   "price",       default: [],              array: true
     t.string   "carsdotcom"
     t.string   "cargurus"
+    t.string   "edmunds"
   end
 
   create_table "old_prices", force: :cascade do |t|
@@ -45,6 +46,7 @@ ActiveRecord::Schema.define(version: 20170509153840) do
     t.string   "cargurus"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string   "edmunds"
   end
 
 end

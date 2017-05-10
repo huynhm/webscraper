@@ -28,6 +28,7 @@ require 'nokogiri'
 			newPH = Pricehistory.new(vin: vin, carsdotcom: carsprice)
 			newPH.save!
 			getCarGurusPrice(vin)
+			getEdmundsPrice(vin)
 		end
 	end
 
@@ -53,3 +54,31 @@ require 'nokogiri'
 				end
 			end
 	end
+def getEdmundsPrice(vin)
+	edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
+	res = Net::HTTP.get_response(URI.parse(edmundURL))
+	# if it returns a good code
+	if res.code.to_i >= 200 && res.code.to_i < 400 #good codes will be betweem 200 - 399
+		if doc = Nokogiri::HTML(open(edmundURL))
+			eprice = doc.css(".price-container>span").text.strip
+			if doc.css(".price-container>span").present?
+				puts "Edmunds Price: #{eprice}"
+				someCar = Car.new(vin: vin)
+				if Car.where(vin: vin)[0].blank?
+					someCar.save!
+				else
+					if Car.where(vin: vin)[0].edmunds.blank?
+						upCar = Car.where(vin: vin)[0]
+						upCar.update(edmunds: edmundURL)
+					end
+				end
+				newPH = Pricehistory.new(vin: vin, edmunds: eprice)
+				newPH.save!
+			end
+		end
+	else
+	  # skip the object
+	  
+	end
+	
+end

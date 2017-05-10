@@ -71,9 +71,10 @@ def initializeCars
 					      newCar = Car.new(model: title, vin: vin, carsdotcom: carlink)
 					      if Car.where(vin: vin)[0].blank?
 					      		newCar.save!
-								  ph = Pricehistory.new(vin: vin, carsdotcom: price)
-								  ph.save
-								  getCarGurusPrice(vin)				      		
+								  #ph = Pricehistory.new(vin: vin, carsdotcom: price)
+								  #ph.save
+								  #getCarGurusPrice(vin)
+								  #getEdmundsPrice(vin)				      		
 						  end
 
 
@@ -89,6 +90,25 @@ def initializeCars
 		end
 
 
+end
+
+def getEdmundsPrice(vin)
+	edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
+	if doc = Nokogiri::HTML(open(edmundURL))
+		eprice = doc.css(".price-container>span").text.strip
+		puts "Edmunds Price: #{eprice}"
+		someCar = Car.new(vin: vin)
+		if Car.where(vin: vin)[0].blank?
+			someCar.save!
+		else
+			if Car.where(vin: vin)[0].edmunds.blank?
+				upCar = Car.where(vin: vin)[0]
+				upCar.update(edmunds: edmundURL)
+			end
+		end
+		newPH = Pricehistory.new(vin: vin, edmunds: eprice)
+		newPH.save!
+	end
 end
 
 
