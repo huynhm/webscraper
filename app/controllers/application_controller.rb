@@ -92,13 +92,15 @@ def initializeCars
 
 end
 
+
 	def getEdmundsPrice(vin)
 		try = 0
 		edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
 		#res = Net::HTTP.get_response(URI.parse(edmundURL))
 		# if it returns a good code
 		#sleep 1.75
-		while try < 3 do
+		while try < 5 do
+			begin
 				if doc = Nokogiri::HTML(open(edmundURL))
 					eprice = doc.css(".price-container>span").text.strip
 					if doc.css(".price-container>span").present?
@@ -118,38 +120,12 @@ end
 
 					end
 				end
-
-			try += 1
-		end
-		
-	end
-
-	def getEdmundsPrice(vin)
-		edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
-		res = Net::HTTP.get_response(URI.parse(edmundURL))
-		# if it returns a good code
-		#sleep 1.75
-		if res.code.to_i >= 200 && res.code.to_i < 400 #good codes will be betweem 200 - 399
-			if doc = Nokogiri::HTML(open(edmundURL))
-				eprice = doc.css(".price-container>span").text.strip
-				if doc.css(".price-container>span").present?
-					puts "Edmunds Price: #{eprice}"
-					someCar = Car.new(vin: vin, edmunds: edmundURL)
-					if Car.where(vin: vin)[0].blank?
-						someCar.save!
-					else
-						if Car.where(vin: vin)[0].edmunds.blank?
-							upCar = Car.where(vin: vin)[0]
-							upCar.update(edmunds: edmundURL)
-						end
-					end
-					newPH = Pricehistory.new(vin: vin, edmunds: eprice)
-					newPH.save!
+			rescue OpenURI::HTTPError => e
+				if e.message.present?
+					puts e.message
 				end
-			end
-		else
-		  # skip the object
-		  
+			end	
+			try += 1
 		end
 		
 	end
