@@ -92,45 +92,52 @@ def initializeCars
 
 end
 
-
-	def getEdmundsPrice(vin)
-		try = 0
-		edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
-		#res = Net::HTTP.get_response(URI.parse(edmundURL))
-		# if it returns a good code
-		#sleep 1.75
-		while try < 5 do
-			begin
-				if doc = Nokogiri::HTML(open(edmundURL))
-					eprice = doc.css(".price-container>span").text.strip
-					if doc.css(".price-container>span").present?
-						puts "Edmunds Price: #{eprice}"
-						someCar = Car.new(vin: vin, edmunds: edmundURL)
-						if Car.where(vin: vin)[0].blank?
-							someCar.save!
-						else
-							if Car.where(vin: vin)[0].edmunds.blank?
-								upCar = Car.where(vin: vin)[0]
-								upCar.update(edmunds: edmundURL)
+	def getEdmundsPrice
+		vin = nil
+		Car.all.each do |cr|
+			vin = cr. vin 
+			try = 0
+			edmundURL = "https://www.edmunds.com/ford/focus/2016/used/vin/?vin=#{vin}"
+			#res = Net::HTTP.get_response(URI.parse(edmundURL))
+			# if it returns a good code
+			#sleep 1.75
+			while try < 5 do
+				begin
+					if doc = Nokogiri::HTML(open(edmundURL))
+						eprice = doc.css(".price-container>span").text.strip
+						if doc.css(".price-container>span").present?
+							puts "Edmunds Price: #{eprice}"
+							someCar = Car.new(vin: vin, edmunds: edmundURL)
+							if Car.where(vin: vin)[0].blank?
+								someCar.save!
+							else
+								if Car.where(vin: vin)[0].edmunds.blank?
+									upCar = Car.where(vin: vin)[0]
+									upCar.update(edmunds: edmundURL)
+								end
 							end
-						end
-						newPH = Pricehistory.new(vin: vin, edmunds: eprice)
-						newPH.save!
-						break
+							newPH = Pricehistory.new(vin: vin, edmunds: eprice)
+							newPH.save!
+							break
 
+						end
 					end
-				end
-			rescue OpenURI::HTTPError => e
-				if e.message.present?
-					puts e.message
-				end
-			end	
-			try += 1
-		end
-		
+				rescue OpenURI::HTTPError => e
+					if e.message.present?
+						puts e.message
+					end
+				end	
+				try += 1
+			end
+
+		end		
 	end
 
-	def getCarGurusPrice(vin)
+
+	def getCarGurusPrice
+		vin = nil
+		Car.all.each do |cr|
+			vin = cr.vin
 			searchURL = "https://www.cargurus.com/Cars/instantMarketValueFromVIN.action?startUrl=%2F&carDescription.vin=#{vin}"
 			if doc2 = Nokogiri::HTML(open(searchURL))
 				cars = doc2.css('.cg-listing-body')
@@ -153,7 +160,9 @@ end
 
 				end
 			end
+		end
 	end
+
 end
 
 
