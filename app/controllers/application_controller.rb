@@ -36,8 +36,21 @@ class ApplicationController < ActionController::Base
 		
 		index = -1
 
+		if Car.count < 1
+			File.open("1kVINs.csv", "r").each_line do |line|
+			  # name: "Angela"    job: "Writer"    ...
+			  data = line.split(/\t/)
+			  vin = data[0].to_s.strip
+			  newVIN = Car.new(vin: vin)
+			  if Car.where(vin: vin)[0].blank?
+			  	newVIN.save!
+			  end
+			end
+			#initializeCars
+		end
 
-		initializeCars
+
+
 
 				
 	    render template: 'scrape_reddit'
@@ -48,46 +61,46 @@ def initializeCars
 		carsdotcom = "https://www.cars.com"
 		pageCount = 10
 		lastPage = 11
-		if Car.count < 1
-			while pageCount < lastPage do  
-				page = $pageCount.to_s
-				carlistings = "https://www.cars.com/for-sale/searchresults.action/?mdId=21138&mkId=20015&page=#{page}&perPage=10&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48126"
-				request = Typhoeus::Request.new(carlistings, followlocation: true)
-				request.on_complete do |response|
-					doc = Nokogiri::HTML(response.body)
-				    cars = doc.css('.shop-srp-listings__listing')
-				    cars.each do |car|
-					      title = car.css('.listing-row__title>a').text.strip
-					      href = car.css('.listing-row__title-visited>a')[0]["href"].strip
-					      carlink = carsdotcom + href
+		
+		while pageCount < lastPage do  
+			page = $pageCount.to_s
+			carlistings = "https://www.cars.com/for-sale/searchresults.action/?mdId=21138&mkId=20015&page=#{page}&perPage=10&rd=30&searchSource=UTILITY&sf1Dir=DESC&sf1Nm=price&zc=48126"
+			request = Typhoeus::Request.new(carlistings, followlocation: true)
+			request.on_complete do |response|
+				doc = Nokogiri::HTML(response.body)
+			    cars = doc.css('.shop-srp-listings__listing')
+			    cars.each do |car|
+				      title = car.css('.listing-row__title>a').text.strip
+				      href = car.css('.listing-row__title-visited>a')[0]["href"].strip
+				      carlink = carsdotcom + href
 
-					      #vinReq = Typhoeus::Request.new("https://www.cars.com/vehicledetail/detail/698146367/overview/", followlocation: true)
-					      vinDoc = Nokogiri::HTML(open(carlink))
-					      vin = vinDoc.css('.breadcrumb-trailing>a')[3].text.strip
-					      vin = vin[5..-1].strip
+				      #vinReq = Typhoeus::Request.new("https://www.cars.com/vehicledetail/detail/698146367/overview/", followlocation: true)
+				      vinDoc = Nokogiri::HTML(open(carlink))
+				      vin = vinDoc.css('.breadcrumb-trailing>a')[3].text.strip
+				      vin = vin[5..-1].strip
 
-					      price = car.css('.listing-row__price').text.strip
-					      puts "-------#{vin}----------"
-					      newCar = Car.new(model: title, vin: vin, carsdotcom: carlink)
-					      if Car.where(vin: vin)[0].blank?
-					      		newCar.save!
-								  #ph = Pricehistory.new(vin: vin, carsdotcom: price)
-								  #ph.save
-								  #getCarGurusPrice(vin)
-								  #getEdmundsPrice(vin)				      		
-						  end
+				      price = car.css('.listing-row__price').text.strip
+				      puts "-------#{vin}----------"
+				      newCar = Car.new(model: title, vin: vin, carsdotcom: carlink)
+				      if Car.where(vin: vin)[0].blank?
+				      		newCar.save!
+							  #ph = Pricehistory.new(vin: vin, carsdotcom: price)
+							  #ph.save
+							  #getCarGurusPrice(vin)
+							  #getEdmundsPrice(vin)				      		
+					  end
 
 
-						  
+					  
 
-					end
 				end
-				hydra.queue(request) 
-				pageCount = pageCount + 1
 			end
-			hydra.run
-
+			hydra.queue(request) 
+			pageCount = pageCount + 1
 		end
+		hydra.run
+
+		
 
 
 end
