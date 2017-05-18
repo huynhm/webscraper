@@ -9,7 +9,7 @@ require 'nokogiri'
 	  #puts STDOUT
 	  puts "_________________TASK BEGIN____________________"
 	  #getCurrentPrices
-	  getCarGurusPrice
+	  #getCarGurusPrice
 	  getEdmundsPrice
 	  puts "_________________TASK END______________________"
 	  #logthis = Logger.new(STDOUT)
@@ -59,7 +59,7 @@ require 'nokogiri'
 							eprice = doc.css(".price-container>span").text.strip
 							if doc.css(".price-container>span").present?
 
-=begin								puts "Edmunds Price: #{eprice}"
+								#puts "Edmunds Price: #{eprice}"
 								someCar = Car.new(vin: vin, edmunds: edmundURL)
 								if Car.where(vin: vin)[0].blank?
 									someCar.save!
@@ -69,7 +69,7 @@ require 'nokogiri'
 										upCar.update(edmunds: edmundURL)
 									end
 								end
-=end
+
 								newPH = Pricehistory.new(vin: vin, edmunds: eprice)
 								newPH.save!
 								
