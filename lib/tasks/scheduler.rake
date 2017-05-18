@@ -9,7 +9,7 @@ require 'nokogiri'
 	  #puts STDOUT
 	  puts "_________________TASK BEGIN____________________"
 	  #getCurrentPrices
-	  #getCarGurusPrice
+	  getCarGurusPrice
 	  getEdmundsPrice
 	  puts "_________________TASK END______________________"
 	  #logthis = Logger.new(STDOUT)
